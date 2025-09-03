@@ -34,6 +34,25 @@ app.post('/generate', upload.single('template'), (req, res) => {
         res.status(500).send({ error: error.message });
     }
 });
+app.post('/generate-json', (req, res) => {
+  try {
+    const { fileBase64, data } = req.body;
+
+    const template = Buffer.from(fileBase64, 'base64').toString('binary');
+    const zip = new PizZip(template);
+    const doc = new Docxtemplater(zip, { paragraphLoop: true, linebreaks: true });
+
+    doc.render(data);
+
+    const buf = doc.getZip().generate({ type: 'nodebuffer' });
+    const fileBase64Out = buf.toString('base64');
+
+    res.json({ fileBase64: fileBase64Out });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
 
 // Start server
 const PORT = process.env.PORT || 3000;
